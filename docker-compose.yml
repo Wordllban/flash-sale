@@ -1,0 +1,57 @@
+# Single environment for the flash-sale engine (ADR/Issue #01).
+# Bring up:  pnpm dev:up   (docker compose up -d)
+# Tear down: pnpm dev:down (docker compose down)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flash-postgres
+    environment:
+      POSTGRES_USER: flash
+      POSTGRES_PASSWORD: flash
+      POSTGRES_DB: flash_sale
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U flash -d flash_sale']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: flash-redis
+    # AOF persistence so the inventory counter survives a restart (ADR-012).
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: flash-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: flash
+      RABBITMQ_DEFAULT_PASS: flash
+    ports:
+      - '5672:5672' # AMQP
+      - '15672:15672' # Management UI → http://localhost:15672 (flash/flash)
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
+  rabbitmq-data:
