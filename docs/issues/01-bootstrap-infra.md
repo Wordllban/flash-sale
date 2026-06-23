@@ -3,11 +3,13 @@
 **Phase:** 0 — Foundation · **Depends on:** none
 
 ## Goal
+
 Stand up all infrastructure via one `docker-compose.yml` and wire the NestJS app shell:
 typed config, structured logging, health checks, graceful shutdown, and the `APP_ROLE`
 process-mode switch.
 
 ## Concepts you'll learn
+
 - **docker-compose** as a single environment for Postgres, Redis, RabbitMQ.
 - **Redis AOF persistence** (`appendonly yes`) — why the inventory counter must survive a restart.
 - **`@nestjs/config`** with schema validation — fail fast at boot if env is wrong.
@@ -15,9 +17,10 @@ process-mode switch.
 - **`APP_ROLE`** — one image, conditional module registration (`api | worker | all`).
 
 ## Steps
+
 1. Add `docker-compose.yml` with services:
    - `postgres:16` (POSTGRES_USER/PASSWORD/DB, volume, healthcheck `pg_isready`).
-   - `redis:7` started with `--appendonly yes` (AOF on), volume, healthcheck `redis-cli ping`.
+   - `redis:8` started with `--appendonly yes` (AOF on), volume, healthcheck `redis-cli ping`.
    - `rabbitmq:3-management` (ports 5672 + 15672 UI, volume, healthcheck `rabbitmq-diagnostics ping`).
 2. `pnpm add @nestjs/config` and create a `ConfigModule` with a validation schema (zod or joi):
    `PORT, APP_ROLE, DATABASE_URL, REDIS_URL, RABBITMQ_URL`. Reject boot on invalid env.
@@ -30,6 +33,7 @@ process-mode switch.
 7. Update `.env` / `.env.example` with all variables. Add a `pnpm dev:up` script (compose up -d).
 
 ## Acceptance criteria
+
 - [ ] `docker compose up -d` brings up Postgres, Redis (AOF), RabbitMQ; all healthy.
 - [ ] App boots and **refuses to start** if a required env var is missing/invalid.
 - [ ] `GET /health` returns 200 with per-dependency status.
@@ -38,6 +42,7 @@ process-mode switch.
 - [ ] RabbitMQ management UI reachable at http://localhost:15672.
 
 ## Docs to read
+
 - NestJS Configuration: https://docs.nestjs.com/techniques/configuration
 - NestJS Lifecycle/shutdown: https://docs.nestjs.com/fundamentals/lifecycle-events
 - NestJS Terminus health: https://docs.nestjs.com/recipes/terminus

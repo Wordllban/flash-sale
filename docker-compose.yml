@@ -20,7 +20,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: flash-redis
     # AOF persistence so the inventory counter survives a restart (ADR-012).
     command: ['redis-server', '--appendonly', 'yes']
