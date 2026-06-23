@@ -1,7 +1,9 @@
 # compiled output
+.pnpm-store
 /dist
 /node_modules
 /build
+*.tsbuildinfo
 
 # Logs
 logs
@@ -54,3 +56,6 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Prisma generated client (regenerated on install via `prisma generate`)
+/src/generated

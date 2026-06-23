@@ -1,0 +1,65 @@
+// Flash-sale durable store (ADR-006: FlashSale + Order + InventoryLedger).
+// Redis is the primary oversell guard; Postgres is the durable record of truth
+// and the LAST line of defence (unique constraints) against oversell/dupes.
+
+generator client {
+  // Prisma 7 default generator. Emits a TypeScript client into our source tree
+  // so it compiles under nest's sourceRoot (keeps `node dist/main` working).
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  // Prisma 7: the connection URL lives in prisma.config.ts (CLI) and is passed
+  // to PrismaClient via the pg driver adapter (runtime). No `url` here.
+  provider = "postgresql"
+}
+
+enum SaleStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+}
+
+enum OrderStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model FlashSale {
+  id         String     @id @default(uuid())
+  name       String
+  totalStock Int
+  status     SaleStatus @default(DRAFT)
+  merchantId String? // forward-compat for the merchant module (ADR-010)
+  createdAt  DateTime   @default(now())
+
+  orders Order[]
+  ledger InventoryLedger[]
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  saleId    String
+  userId    String
+  status    OrderStatus @default(CONFIRMED)
+  createdAt DateTime    @default(now())
+
+  sale FlashSale @relation(fields: [saleId], references: [id])
+
+  // 1-per-customer backstop: DB rejects a duplicate even if Redis is bypassed.
+  @@unique([userId, saleId])
+}
+
+model InventoryLedger {
+  id        String   @id @default(uuid())
+  saleId    String
+  userId    String
+  delta     Int // -1 per confirmed sale (append-only; reconciliation sums this)
+  orderId   String   @unique // consumer idempotency key: one ledger row per order
+  createdAt DateTime @default(now())
+
+  sale FlashSale @relation(fields: [saleId], references: [id])
+}

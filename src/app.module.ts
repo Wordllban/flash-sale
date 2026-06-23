@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
 import { LoggerModule } from './observability/logger.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { HealthModule } from './health/health.module';
       validate: validateEnv,
     }),
     LoggerModule,
+    PrismaModule,
     HealthModule,
   ],
   controllers: [AppController],
